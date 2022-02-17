@@ -111,6 +111,10 @@ class Localizer:
 
         # TODO: Look through text for links and localize within the
         # same issue
+        links =  soup.find_all("a")
+        for a in links:
+            if a["href"] in self.issue_urls:
+                a["href"] = f"page{self.issue_urls[a['href']]+1}.html"
 
         return soup.prettify()
 

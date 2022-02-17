@@ -66,6 +66,7 @@ def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "") -> None:
     # click the "next" arrow first and let the page load
     arrows = driver.find_element(By.CLASS_NAME, "KGDocViewer_arrows")
     for i, page in enumerate(page_list):
+        time.sleep(0.5)
         iframe = page.find_element(By.TAG_NAME, "iframe")
         iframe = WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it(iframe))
         # driver.switch_to.frame(iframe)
@@ -117,7 +118,7 @@ if __name__ == "__main__":
         # main page in between
         pass
 
-    driver = webdriver.Firefox()
+    driver = webdriver.Firefox(service_log_path=os.devnull)
     issues = get_issues_list(driver)
 
     click_issue_button(driver, issues[-1])
