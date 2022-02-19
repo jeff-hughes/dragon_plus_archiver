@@ -15,10 +15,12 @@ class Localizer:
             issue_urls: Dict[str, int],
             root_dir: str = "",
             issue_dir: str = "Issue",
-            common_assets_dir: str = "common") -> None:
+            common_assets_dir: str = "common",
+            overwrite_assets: bool = False) -> None:
 
         self.issue_urls = issue_urls
         self.base_url = None
+        self.overwrite_assets = overwrite_assets
 
         self.root_dir = root_dir
         self.issue_dir = os.path.join(root_dir, issue_dir)
@@ -109,8 +111,6 @@ class Localizer:
                     abs_dir=os.path.join(self.issue_dir, self.images_dir),
                     binary=True)
 
-        # TODO: Look through text for links and localize within the
-        # same issue
         links =  soup.find_all("a")
         for a in links:
             if a["href"] in self.issue_urls:
@@ -132,7 +132,7 @@ class Localizer:
         abs_path = os.path.join(abs_dir, url_parts[-1])
 
         # only re-download if we don't already have the resource
-        if not os.path.exists(abs_path):
+        if self.overwrite_assets or not os.path.exists(abs_path):
             r = requests.get(url)
             if r.status_code == 200:
                 if binary:

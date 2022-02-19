@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import time
 from typing import List
 
@@ -19,6 +20,7 @@ from localize import Localizer
 DRIVER_OPTIONS = ["firefox", "chromium", "chrome", "edge", "safari", "ie", "webkit"]
 
 def start_driver(driver_type: str) -> WebDriver:
+    """Initializes one of the available Selenium web drivers and returns it."""
     if driver_type not in DRIVER_OPTIONS:
         raise ValueError(f"Driver type not one of the following:\n{', '.join(DRIVER_OPTIONS)}")
     if driver_type == "firefox":
@@ -48,6 +50,7 @@ def get_issues_list(driver: WebDriver) -> List[WebElement]:
 
     issue_list = driver.find_element(By.CLASS_NAME, "KGDocPicker_editionsList")
     issues = issue_list.find_elements(By.TAG_NAME, "li")
+    issues = list(reversed(issues))
     # for i in issues:
     #     print(i.text)
 
@@ -62,20 +65,14 @@ def click_issue_button(driver: WebDriver, issue_elem: WebElement) -> None:
     visible_button.click()
 
 
-# def get_page(driver: WebDriver, filename: str = "",
-#              root_dir: str = "", issue_dir: str = "",
-#              common_assets_dir: str = "") -> None:
-#     """Within the context of an iframe, this downloads the content
-#     of the page to a local file."""
-#     localizer = Localizer(root_dir=root_dir, issue_dir=issue_dir, common_assets_dir=common_assets_dir)
-#     converted = localizer.localize_page(driver.page_source, filename)
-
-#     os.makedirs(os.path.join(root_dir, issue_dir), exist_ok=True)
-#     with open(os.path.join(root_dir, issue_dir, filename), "w") as f:
-#         f.write(converted)
+def return_home(driver: WebDriver) -> None:
+    """While viewing a particular issue, this finds the home button and clicks it to return to the main page with the list of issues."""
+    home_button = driver.find_element(By.CSS_SELECTOR, "button.KGDocViewer_toolbar_button.js-home")
+    ActionChains(driver).move_to_element(home_button).click(home_button).perform()
 
 
-def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "") -> None:
+def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "",
+                  overwrite_existing: bool = False) -> None:
     """When viewing a particular issue, this downloads all the
     pages to local files."""
     page_list = driver.find_elements(By.CLASS_NAME, "KGDocViewer_page")
@@ -98,19 +95,11 @@ def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "") -> None:
         all_pages_source.append(driver.page_source)
         all_urls[driver.current_url] = i
 
-        # get_page(
-        #     driver,
-        #     filename=f"page{i+1}.html",
-        #     root_dir=outdir,
-        #     issue_dir=issue_dir,
-        #     common_assets_dir="common"
-        # )
         driver.switch_to.parent_frame()
 
         try:
             forward_button = arrows.find_element(By.CLASS_NAME, "KGDocViewer_pages_arrowsNext")
             forward_button.click()
-            # time.sleep(1)
         except NoSuchElementException:
             # we've reached the last page
             break
@@ -119,7 +108,7 @@ def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "") -> None:
     # in a context where we know all the URLs for the issue as well
     for i, source in enumerate(all_pages_source):
         filename = f"page{i+1}.html"
-        localizer = Localizer(root_dir=outdir, issue_dir=issue_dir, common_assets_dir="common", issue_urls=all_urls)
+        localizer = Localizer(root_dir=outdir, issue_dir=issue_dir, common_assets_dir="common", issue_urls=all_urls, overwrite_assets=overwrite_existing)
         converted = localizer.localize_page(source, filename)
 
         os.makedirs(os.path.join(outdir, issue_dir), exist_ok=True)
@@ -139,17 +128,34 @@ if __name__ == "__main__":
                         help=f"Which web driver to use. Choose from: {', '.join(DRIVER_OPTIONS)}")
     args = parser.parse_args()
 
-    if args.issue is not None:
-        # TODO: handle issue numbers here; need to return back to
-        # main page in between
-        pass
+    # find existing issues we already have in the outdir
+    subdirs = [o for o in os.listdir(args.outdir) if os.path.isdir(os.path.join(args.outdir, o))]
+    existing_issues = []
+    for d in subdirs:
+        match = re.fullmatch(r".*Issue ([0-9]+)", d)
+        if match:
+            existing_issues.append(int(match.group(1)) - 1)
 
     driver = start_driver(args.driver)
-    issues = get_issues_list(driver)
+    all_issues = get_issues_list(driver)
 
-    click_issue_button(driver, issues[-1])
-    time.sleep(3)  # wait for page to load
+    if args.issue is not None:
+        # change from 1-indexed to 0-indexed
+        issues_to_get = [x - 1 for x in args.issue]
+        overwrite_existing = True
+    else:
+        issues_to_get = [x for x in range(len(all_issues)) if x not in existing_issues]
+        overwrite_existing = False
 
-    get_all_pages(driver, issue_num=1, outdir=args.outdir)
+    for i, iss in enumerate(issues_to_get):
+        print(f"Retrieving Issue {iss+1}")
+        click_issue_button(driver, all_issues[iss])
+        time.sleep(3)  # wait for page to load
+
+        get_all_pages(driver, issue_num=iss + 1, outdir=args.outdir, overwrite_existing=overwrite_existing)
+
+        if i < len(issues_to_get) - 1:
+            return_home(driver)
+            time.sleep(0.5)
 
     driver.close()
