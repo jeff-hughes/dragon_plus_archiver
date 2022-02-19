@@ -16,6 +16,30 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from localize import Localizer
 
+DRIVER_OPTIONS = ["firefox", "chromium", "chrome", "edge", "safari", "ie", "webkit"]
+
+def start_driver(driver_type: str) -> WebDriver:
+    if driver_type not in DRIVER_OPTIONS:
+        raise ValueError(f"Driver type not one of the following:\n{', '.join(DRIVER_OPTIONS)}")
+    if driver_type == "firefox":
+        import selenium.webdriver.firefox as drv
+    elif driver_type == "chromium":
+        import selenium.webdriver.chromium as drv
+    elif driver_type == "chrome":
+        import selenium.webdriver.chrome as drv
+    elif driver_type == "edge":
+        import selenium.webdriver.edge as drv
+    elif driver_type == "safari":
+        import selenium.webdriver.safari as drv
+    elif driver_type == "ie":
+        import selenium.webdriver.ie as drv
+    elif driver_type == "webkit":
+        import selenium.webdriver.webkitgtk as drv
+
+    service = drv.service.Service(log_path=os.devnull)
+    driver = drv.webdriver.WebDriver(service=service)
+    return driver
+
 
 def get_issues_list(driver: WebDriver) -> List[WebElement]:
     """From the main page, get the list of issues."""
@@ -111,6 +135,8 @@ if __name__ == "__main__":
                         help="Issue numbers to download. Separate the list with spaces. If flag is not set, will download all issues.")
     parser.add_argument("-o", "--outdir", nargs="?", default="./data",
                         help="Directory to place output files.")
+    parser.add_argument("-d", "--driver", nargs="?", default="firefox",
+                        help=f"Which web driver to use. Choose from: {', '.join(DRIVER_OPTIONS)}")
     args = parser.parse_args()
 
     if args.issue is not None:
@@ -118,7 +144,7 @@ if __name__ == "__main__":
         # main page in between
         pass
 
-    driver = webdriver.Firefox(service_log_path=os.devnull)
+    driver = start_driver(args.driver)
     issues = get_issues_list(driver)
 
     click_issue_button(driver, issues[-1])
