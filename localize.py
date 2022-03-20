@@ -12,12 +12,14 @@ import requests
 class Localizer:
     def __init__(
             self,
+            domain: str,
             issue_urls: Dict[str, int],
             root_dir: str = "",
             issue_dir: str = "Issue",
             common_assets_dir: str = "common",
             overwrite_assets: bool = False) -> None:
 
+        self.domain = domain
         self.issue_urls = issue_urls
         self.base_url = None
         self.overwrite_assets = overwrite_assets
@@ -171,6 +173,9 @@ class Localizer:
         if url.startswith("'data:") or url.startswith("#"):
             # this is an SVG element
             return match_obj.group(0)
+        if url.startswith("/"):
+            # add the domain to the beginning
+            url = self.domain + url
         if url.startswith("."):
             url = url_rel_to_abs(url, orig_url)
         if url.lower().endswith((".ttf", ".otf", ".woff", ".woff2", ".eot")):
