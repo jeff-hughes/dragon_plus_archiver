@@ -111,6 +111,12 @@ class Localizer:
                     abs_dir=os.path.join(self.issue_dir, self.images_dir),
                     binary=True)
 
+        # localize any links that refer to other pages in the issue
+        links = soup.find_all("a")
+        for a in links:
+            if a["href"] in self.issue_urls:
+                a["href"] = f"page{self.issue_urls[a['href']]+1}.html"
+
         # add forward and back arrows
         if page == 1:
             nav_arrows = create_nav_arrows(page=page, prev=False)
@@ -119,12 +125,6 @@ class Localizer:
         else:
             nav_arrows = create_nav_arrows(page=page)
         soup.body.insert(0, nav_arrows)
-
-        # localize any links that refer to other pages in the issue
-        links = soup.find_all("a")
-        for a in links:
-            if "href" in a and a["href"] in self.issue_urls:
-                a["href"] = f"page{self.issue_urls[a['href']]+1}.html"
 
         return soup.prettify()
 
@@ -168,7 +168,7 @@ class Localizer:
         this pulls the appropriate resource and returns a localized
         path."""
         url = match_obj.group(1)
-        if url.startswith("'data:"):
+        if url.startswith("'data:") or url.startswith("#"):
             # this is an SVG element
             return match_obj.group(0)
         if url.startswith("."):

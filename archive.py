@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download issues of Dragon+ magazine.")
     parser.add_argument("-i", "--issue", nargs="+", type=int,
-                        help="Issue numbers to download. Separate the list with spaces. If flag is not set, will download all issues.")
+                        help="Issue numbers to download. Separate the numbers in the list with spaces. If flag is not set, will download all issues.")
     parser.add_argument("-o", "--outdir", nargs="?", default="./data",
                         help="Directory to place output files.")
     parser.add_argument("-d", "--driver", nargs="?", default="firefox",
