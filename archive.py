@@ -123,9 +123,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download issues of Dragon+ magazine.")
     parser.add_argument("-i", "--issue", nargs="+", type=int,
-                        help="Issue numbers to download. Separate the numbers in the list with spaces. If flag is not set, will download all issues.")
+                        help="Issue numbers to download. Separate the numbers in the list with spaces. If flag is not set, will download all issues that are not in the outdir.")
     parser.add_argument("-o", "--outdir", nargs="?", default="./data",
                         help="Directory to place output files.")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Add this flag to overwrite existing styles, scripts, and images that have been downloaded previously.")
     parser.add_argument("-d", "--driver", nargs="?", default="firefox",
                         help=f"Which web driver to use. Choose from: {', '.join(DRIVER_OPTIONS)}")
     args = parser.parse_args()
@@ -144,21 +146,19 @@ if __name__ == "__main__":
     if args.issue is not None:
         # change from 1-indexed to 0-indexed
         issues_to_get = [x - 1 for x in args.issue]
-        overwrite_existing = True
     else:
         issues_to_get = [x for x in range(len(all_issues)) if x not in existing_issues]
-        overwrite_existing = False
 
     for i, iss in enumerate(issues_to_get):
         print(f"Retrieving Issue {iss+1}")
         click_issue_button(driver, all_issues[iss])
         time.sleep(3)  # wait for page to load
 
-        get_all_pages(driver, issue_num=iss + 1, outdir=args.outdir, overwrite_existing=overwrite_existing)
+        get_all_pages(driver, issue_num=iss + 1, outdir=args.outdir, overwrite_existing=args.overwrite)
 
         if i < len(issues_to_get) - 1:
             return_home(driver)
-            time.sleep(0.5)
+            time.sleep(1)
 
     # create/update the index page
     print("Creating index page...")
