@@ -32,6 +32,9 @@ python archive.py --help
 
 NOTE: These instructions are for Unix-based systems; people on Windows may need to make some adjustments to the commands above.
 
+After running the script, check the `outdir` (`./data` by default) to view the pages. Open `index.html` for an overall list of archived issues,
+or view a specific issue by navigating to the directory for that issue.
+
 ## Copyright
 
 This project is not affiliated in any way with Dragon+ Magazine or Wizards of the Coast, and they retain all copyrights to the material. This tool is to be used for personal archiving purposes only, and must not be used to redistribute material.

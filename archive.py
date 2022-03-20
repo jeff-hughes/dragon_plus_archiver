@@ -9,13 +9,13 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from localize import Localizer
+from create_index import get_issue_metadata, create_index
 
 DRIVER_OPTIONS = ["firefox", "chromium", "chrome", "edge", "safari", "ie", "webkit"]
 
@@ -159,5 +159,10 @@ if __name__ == "__main__":
         if i < len(issues_to_get) - 1:
             return_home(driver)
             time.sleep(0.5)
+
+    # create/update the index page
+    print("Creating index page...")
+    issue_metadata = get_issue_metadata(driver)
+    create_index(issue_metadata, args.outdir)
 
     driver.close()

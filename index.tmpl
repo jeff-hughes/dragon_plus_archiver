@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="Dragon+ Magazine Archive Index" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dragon+ Magazine Archive</title>
+    <style>
+body {
+    background-color: rgb(238, 235, 233);
+    font-family: sans-serif;
+    font-size: 1.2em;
+}
+a, a:visited {
+    color: #000;
+    text-decoration: none;
+}
+a:hover, a:focus {
+    color: #9d0a0e;
+    text-decoration: none;
+}
+h1 {
+    text-align: center;
+}
+.issue_list {
+    list-style: none;
+    margin: 0 auto;
+    max-width: 1000px;
+}
+.issue_list li {
+    float: left;
+    padding: 17px 0;
+}
+.issue_list img {
+    max-width: 250px;
+    max-height: 250px;
+}
+.issue_list div {
+    text-align: center;
+}
+.issue_list h2 {
+    font-size: 80%;
+    margin: 0;
+}
+.issue_list p {
+    font-size: 70%;
+    margin: 0;
+}
+    </style>
+  </head>
+  <body>
+    <h1>Dragon+ Magazine Archive</h1>
+    <ul class="issue_list">
+{{ISSUE_LIST}}
+    </ul>
+  </body>
+</html>
