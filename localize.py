@@ -38,7 +38,7 @@ class Localizer:
         for dr in (root_dir, self.issue_dir, common_to_root, os.path.join(common_to_root, "styles"), os.path.join(common_to_root, "fonts"), os.path.join(common_to_root, "scripts"), os.path.join(self.issue_dir, "img")):
             os.makedirs(dr, exist_ok=True)
 
-    def localize_page(self, raw_data: str, filename: str) -> str:
+    def localize_page(self, raw_data: str, filename: str, page: int) -> str:
         """Parses a full page and localizes all resources."""
         soup = BeautifulSoup(raw_data, 'html.parser')
 
@@ -111,9 +111,19 @@ class Localizer:
                     abs_dir=os.path.join(self.issue_dir, self.images_dir),
                     binary=True)
 
-        links =  soup.find_all("a")
+        # add forward and back arrows
+        if page == 1:
+            nav_arrows = create_nav_arrows(page=page, prev=False)
+        elif page == len(self.issue_urls):
+            nav_arrows = create_nav_arrows(page=page, next=False)
+        else:
+            nav_arrows = create_nav_arrows(page=page)
+        soup.body.insert(0, nav_arrows)
+
+        # localize any links that refer to other pages in the issue
+        links = soup.find_all("a")
         for a in links:
-            if a["href"] in self.issue_urls:
+            if "href" in a and a["href"] in self.issue_urls:
                 a["href"] = f"page{self.issue_urls[a['href']]+1}.html"
 
         return soup.prettify()
@@ -203,6 +213,99 @@ def url_rel_to_abs(relative_url: str, from_url: str) -> str:
         rel_url_parts = rel_url_parts[1:]
     return "/".join(abs_url_parts + rel_url_parts)
 
+
+def create_nav_arrows(page: int, prev: bool = True, next: bool = True) -> bs4.element.Tag:
+    html = """
+<style>
+.assets_icons, .assets_icons figure {
+  width: 0;
+  height: 0;
+}
+
+.viewer_arrows a {
+  background: rgba(3,3,3,.6);
+  display: block;
+  line-height: 100px;
+  margin-top: -60px;
+  position: fixed;
+  bottom: 0;
+  top: 50%;
+  width: 50px;
+  height: 100px;
+  z-index: 1000;
+}
+
+.viewer_arrows .arrow_prev {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.viewer_arrows .arrow_next {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  right: 0;
+}
+
+.viewer_arrows button {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  fill: black;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+  text-align: center;
+  width: 50px;
+  height: 100%;
+}
+
+.viewer_arrows svg {
+  fill: #eee;
+  overflow: hidden;
+  pointer-events: none;
+  width: 40px;
+  height: 100%;
+}
+</style>
+<div class="assets_icons">
+  <figure>
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <symbol id="icon-back" viewBox="-322 443 75 75">
+        <title>back</title>
+        <path id="back-XMLID_15_" d="M-302.3,480.6c0,0,28.9,28.8,29.1,28.9c0.2,0.2,2,1.3,3.4-0.1c1.4-1.4,0.4-2.8,0.2-3
+	c-0.1-0.1-25.6-25.8-25.6-25.8l25.4-25.4c0,0,1.7-1.8,0-3.5c-1.6-1.6-3.4-0.1-3.4-0.1L-302.3,480.6z"></path>	
+      </symbol>
+      <symbol id="icon-forward" viewBox="-322 443 75 75">
+        <title>forward</title>
+        <path id="forward-XMLID_15_" d="M-261.2,480.4c0,0-28.9-28.8-29.1-28.9c-0.2-0.2-2-1.3-3.4,0.1c-1.4,1.4-0.4,2.8-0.2,3
+	c0.1,0.1,25.6,25.8,25.6,25.8l-25.4,25.5c0,0-1.7,1.8,0,3.5c1.6,1.6,3.4,0.1,3.4,0.1L-261.2,480.4z"></path>	
+      </symbol>
+    </svg>
+  </figure>
+</div>
+<nav class="viewer_arrows">
+"""
+    if prev:
+        html += f"""
+  <a class="arrow_prev" href="page{page-1}.html">
+    <button aria-hidden="true" tabindex="-1" data-tooltip="Previous">
+      <svg><use xlink:href="#icon-back"></use></svg>
+    </button>
+  </a>
+"""
+    if next:
+        html += f"""
+  <a class="arrow_next" href="page{page+1}.html">
+    <button aria-hidden="true" tabindex="-1" data-tooltip="Next">
+      <svg><use xlink:href="#icon-forward"></use></svg>
+    </button>
+  </a>
+"""
+    html += """
+</nav>
+"""
+    elems = BeautifulSoup(html, 'html.parser')
+    return elems
 
 
 if __name__ == "__main__":

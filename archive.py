@@ -106,14 +106,16 @@ def get_all_pages(driver: WebDriver, issue_num: int, outdir: str = "",
 
     # now that we have all the page sources, we can localize them,
     # in a context where we know all the URLs for the issue as well
+    localizer = Localizer(root_dir=outdir, issue_dir=issue_dir, common_assets_dir="common", issue_urls=all_urls, overwrite_assets=overwrite_existing)
     for i, source in enumerate(all_pages_source):
+        start_time = time.time()
         filename = f"page{i+1}.html"
-        localizer = Localizer(root_dir=outdir, issue_dir=issue_dir, common_assets_dir="common", issue_urls=all_urls, overwrite_assets=overwrite_existing)
-        converted = localizer.localize_page(source, filename)
+        converted = localizer.localize_page(source, filename, page=i+1)
 
         os.makedirs(os.path.join(outdir, issue_dir), exist_ok=True)
         with open(os.path.join(outdir, issue_dir, filename), "w") as f:
             f.write(converted)
+        print(f"Page {i+1} finished: {(time.time() - start_time):.2f}s")
 
 
 if __name__ == "__main__":
